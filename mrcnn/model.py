@@ -696,8 +696,12 @@ def refine_detections_graph(rois, probs, deltas, window, config):
     Returns detections shaped: [num_detections, (y1, x1, y2, x2, class_id, score)] where
         coordinates are normalized.
     """
-    # Class IDs per ROI
-    class_ids = tf.argmax(probs, axis=1, output_type=tf.int32)
+    # Class IDs per ROI # Changed by PhanNT1
+    # class_ids = tf.argmax(probs, axis=1, output_type=tf.int32)
+    if config.NUM_CLASSES >= 2:
+        class_ids = tf.ones_like(probs[:, 0], dtype=tf.int32)
+    else:
+        class_ids = tf.argmax(probs, axis=1, output_type=tf.int32)
     # Class probability of the top class of each ROI
     indices = tf.stack([tf.range(probs.shape[0]), class_ids], axis=1)
     class_scores = tf.gather_nd(probs, indices)
@@ -1034,7 +1038,7 @@ def rpn_class_loss_graph(rpn_match, rpn_class_logits):
     # but neutral anchors (match value = 0) don't.
     indices = tf.where(K.not_equal(rpn_match, 0))
     # Pick rows that contribute to the loss and filter out the rest.
-    rpn_class_logits = tf.gather_nd(rpn_class_logits, indices)
+    rpn_class_logits = tf.gather_nd(rpn_class_logits, indices) + K.epsilon()
     anchor_class = tf.gather_nd(anchor_class, indices)
     # Cross entropy loss
     loss = K.sparse_categorical_crossentropy(target=anchor_class,
@@ -1610,7 +1614,7 @@ def generate_random_rois(image_shape, count, gt_class_ids, gt_boxes):
         y1y2 = np.random.randint(0, image_shape[0], (remaining_count * 2, 2))
         x1x2 = np.random.randint(0, image_shape[1], (remaining_count * 2, 2))
         # Filter out zero area boxes
-        threshold = 1
+        threshold = 20
         y1y2 = y1y2[np.abs(y1y2[:, 0] - y1y2[:, 1]) >=
                     threshold][:remaining_count]
         x1x2 = x1x2[np.abs(x1x2[:, 0] - x1x2[:, 1]) >=
@@ -1628,7 +1632,7 @@ def generate_random_rois(image_shape, count, gt_class_ids, gt_boxes):
 
 
 def data_generator(dataset, config, shuffle=True, augment=False, augmentation=None,
-                   random_rois=0, batch_size=1, detection_targets=False,
+                   random_rois=0, batch_size=2, detection_targets=False,
                    no_augmentation_sources=None):
     """A generator that returns images and corresponding target class ids,
     bounding box deltas, and masks.
@@ -2369,9 +2373,9 @@ class MaskRCNN():
             callbacks=callbacks,
             validation_data=val_generator,
             validation_steps=self.config.VALIDATION_STEPS,
-            max_queue_size=100,
-            workers=workers,
-            use_multiprocessing=True,
+            max_queue_size=3,
+            workers=1,
+            use_multiprocessing=False,
         )
         self.epoch = max(self.epoch, epochs)
 
@@ -2491,8 +2495,7 @@ class MaskRCNN():
         masks: [H, W, N] instance binary masks
         """
         assert self.mode == "inference", "Create model in inference mode."
-        assert len(
-            images) == self.config.BATCH_SIZE, "len(images) must be equal to BATCH_SIZE"
+        assert len(images) == self.config.BATCH_SIZE, "len(images) must be equal to BATCH_SIZE"
 
         if verbose:
             log("Processing {} images".format(len(images)))
