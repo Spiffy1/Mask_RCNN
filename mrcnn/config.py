@@ -31,7 +31,7 @@ class Config(object):
     # handle 2 images of 1024x1024px.
     # Adjust based on your GPU memory and image sizes. Use the highest
     # number that your GPU can handle for best performance.
-    IMAGES_PER_GPU = 2
+    IMAGES_PER_GPU = 1
 
     # Number of training steps per epoch
     # This doesn't need to match the size of the training set. Tensorboard
@@ -40,12 +40,12 @@ class Config(object):
     # Validation stats are also calculated at each epoch end and they
     # might take a while, so don't set this too small to avoid spending
     # a lot of time on validation stats.
-    STEPS_PER_EPOCH = 1000
+    STEPS_PER_EPOCH = 100
 
     # Number of validation steps to run at the end of every training epoch.
     # A bigger number improves accuracy of validation stats, but slows
     # down the training.
-    VALIDATION_STEPS = 50
+    VALIDATION_STEPS = 2
 
     # Backbone network architecture
     # Supported values are: resnet50, resnet101.
@@ -89,18 +89,18 @@ class Config(object):
     RPN_NMS_THRESHOLD = 0.7
 
     # How many anchors per image to use for RPN training
-    RPN_TRAIN_ANCHORS_PER_IMAGE = 256
+    RPN_TRAIN_ANCHORS_PER_IMAGE = 1024
     
     # ROIs kept after tf.nn.top_k and before non-maximum suppression
     PRE_NMS_LIMIT = 6000
 
     # ROIs kept after non-maximum suppression (training and inference)
     POST_NMS_ROIS_TRAINING = 2000
-    POST_NMS_ROIS_INFERENCE = 1000
+    POST_NMS_ROIS_INFERENCE = 2000
 
     # If enabled, resizes instance masks to a smaller size to reduce
     # memory load. Recommended when using high-resolution images.
-    USE_MINI_MASK = True
+    USE_MINI_MASK = False
     MINI_MASK_SHAPE = (56, 56)  # (height, width) of the mini-mask
 
     # Input image resizing
@@ -124,8 +124,8 @@ class Config(object):
     #         size IMAGE_MIN_DIM x IMAGE_MIN_DIM. Can be used in training only.
     #         IMAGE_MAX_DIM is not used in this mode.
     IMAGE_RESIZE_MODE = "square"
-    IMAGE_MIN_DIM = 800
-    IMAGE_MAX_DIM = 1024
+    IMAGE_MIN_DIM = 1000
+    IMAGE_MAX_DIM = 2048
     # Minimum scaling ratio. Checked after MIN_IMAGE_DIM and can force further
     # up scaling. For example, if set to 2 then images are scaled up to double
     # the width and height, or more, even if MIN_IMAGE_DIM doesn't require it.
@@ -165,14 +165,14 @@ class Config(object):
     BBOX_STD_DEV = np.array([0.1, 0.1, 0.2, 0.2])
 
     # Max number of final detections
-    DETECTION_MAX_INSTANCES = 100
+    DETECTION_MAX_INSTANCES = 150
 
     # Minimum probability value to accept a detected instance
     # ROIs below this threshold are skipped
-    DETECTION_MIN_CONFIDENCE = 0.7
+    DETECTION_MIN_CONFIDENCE = 0.9
 
     # Non-maximum suppression threshold for detection
-    DETECTION_NMS_THRESHOLD = 0.3
+    DETECTION_NMS_THRESHOLD = 0.8
 
     # Learning rate and momentum
     # The Mask RCNN paper uses lr=0.02, but on TensorFlow it causes
